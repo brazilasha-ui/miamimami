@@ -881,8 +881,9 @@ const BIANCA_ITEMS=[
   {item:'Misc / tips',amt:75}
 ];
 let currentBudgetPerson='Brazil';
-function getBudgetItems(person){ const key='bgt_'+person; const saved=localStorage.getItem(key); if(saved)try{return JSON.parse(saved);}catch(e){} const def=person==='Brazil'?BRAZIL_ITEMS:(person==='Bianca'?BIANCA_ITEMS:FRIEND_ITEMS); localStorage.setItem(key,JSON.stringify(def)); return JSON.parse(JSON.stringify(def)); }
-function saveBudgetItems(person,items){ localStorage.setItem('bgt_'+person,JSON.stringify(items)); }
+function getBudgetItems(person){ const def=person==='Brazil'?BRAZIL_ITEMS:(person==='Bianca'?BIANCA_ITEMS:FRIEND_ITEMS); return JSON.parse(JSON.stringify(def)); }
+function saveBudgetItems(person,items){ dbSet('budget/'+person, items); }
+function loadBudget(person){ dbOn('budget/'+person, function(data){ renderBudgetData(person, data); }); }
 function renderBudget(person){
   currentBudgetPerson=person;
   const body=document.getElementById('budget-body'); if(!body)return;
@@ -1069,7 +1070,7 @@ function switchTimeline(person,btn){
 function toggleTask(key,el){
   const done=el.classList.toggle('done');
   localStorage.setItem(key,done?'1':'0');
-  if(db&&done)dbSet('tasks/'+key,{done:true,ts:Date.now()});
+  dbSet('tasks/'+key, done ? {done:true,ts:Date.now()} : null);
 }
 
 
@@ -1145,12 +1146,9 @@ function postAnnouncement(){
 }
 
 const PACK_DEFAULTS = PACKING.map(cat=>({...cat, items:cat.items.map(i=>({t:i,done:false}))}));
-function getPackData(person){
-  const k='pack_'+person; const s=localStorage.getItem(k);
-  if(s)try{return JSON.parse(s);}catch(e){}
-  return JSON.parse(JSON.stringify(PACK_DEFAULTS));
-}
-function savePackData(person,data){localStorage.setItem('pack_'+person,JSON.stringify(data));}
+function getPackData(person){ return JSON.parse(JSON.stringify(PACK_DEFAULTS)); }
+function savePackData(person,data){ dbSet('packing/'+person, data); }
+function loadPackData(person,cb){ dbOn('packing/'+person, function(data){ cb(data && data.length ? data : JSON.parse(JSON.stringify(PACK_DEFAULTS))); }); }
 function switchPack(person,btn){
   localStorage.setItem('pack_person',person);
   document.querySelectorAll('#pack-tabs .tab').forEach(t=>t.classList.remove('on'));
